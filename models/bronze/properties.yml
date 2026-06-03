@@ -1,0 +1,7 @@
+#  this file is for understanding of materialize the files of folder individually. If you want to materialize whole folder 
+#  then check dbt_project.yml file. 
+
+# models:
+#   - name: bronze_bookings
+#     config:
+#       materialized: view
