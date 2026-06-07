@@ -1,89 +1,98 @@
-# Airbnb Analytics Platform | Snowflake + dbt + AWS
+# 🏠 Airbnb Analytics Engineering Platform using Snowflake, dbt & AWS
 
-## Project Overview
+## 📌 Project Overview
 
-This project demonstrates the design and implementation of a modern cloud-based data platform for Airbnb analytics using Snowflake, dbt, and AWS.
+This project demonstrates the implementation of an end-to-end cloud-based Analytics Engineering platform using Snowflake, dbt, and AWS.
 
-The solution follows the Medallion Architecture pattern (Bronze → Silver → Gold) to transform raw operational data into trusted, analytics-ready datasets. It incorporates data modeling best practices, incremental processing, Slowly Changing Dimensions (SCD Type 2), automated testing, and reusable transformation logic.
+The solution follows the Medallion Architecture pattern (Bronze → Silver → Gold) to transform raw Airbnb operational data into trusted, analytics-ready datasets. The project incorporates modern data engineering best practices including incremental data loading, Slowly Changing Dimensions (SCD Type 2), data quality testing, reusable macros, and dimensional modeling.
 
-The objective of this project is to simulate a real-world analytics engineering workflow where raw business data is transformed into reliable datasets that support reporting, dashboarding, and decision-making.
+The primary goal is to simulate a real-world analytics environment where raw business data is transformed into reliable datasets for reporting, dashboarding, and decision-making.
 
 ---
 
-## Business Problem
+## 🎯 Business Problem
 
-Airbnb generates large volumes of booking, host, and property listing data on a daily basis. Raw operational data is difficult for business users to consume directly because:
+Airbnb generates large volumes of operational data related to:
+
+* Property Listings
+* Hosts
+* Bookings
+
+Raw source data is not immediately suitable for analytical consumption because:
 
 * Data quality issues may exist
-* Historical changes need to be tracked
-* Multiple datasets must be joined together
-* Analytics teams require curated and trusted data assets
+* Historical changes are not tracked
+* Business metrics are not readily available
+* Data resides across multiple datasets
 
-This project addresses these challenges by building a scalable ELT pipeline capable of transforming raw data into business-ready analytical models.
+This project addresses these challenges by building a scalable ELT pipeline that standardizes, validates, enriches, and models Airbnb data for downstream analytics.
 
 ---
 
-## Solution Architecture
+# 🏗️ Solution Architecture
+
+## High-Level Architecture
 
 ```text
-                ┌──────────────────┐
-                │   Source CSVs    │
-                └────────┬─────────┘
-                         │
-                         ▼
-                ┌──────────────────┐
-                │      AWS S3      │
-                │   Data Landing   │
-                └────────┬─────────┘
-                         │
-                         ▼
-                ┌──────────────────┐
-                │    Snowflake     │
-                │  Staging Layer   │
-                └────────┬─────────┘
-                         │
-         ┌───────────────┼────────────────┐
-         ▼               ▼                ▼
+                 ┌─────────────────┐
+                 │ Airbnb CSV Data │
+                 └────────┬────────┘
+                          │
+                          ▼
+                 ┌─────────────────┐
+                 │     AWS S3      │
+                 │ Landing Zone    │
+                 └────────┬────────┘
+                          │
+                          ▼
+                 ┌─────────────────┐
+                 │   Snowflake     │
+                 │ Staging Layer   │
+                 └────────┬────────┘
+                          │
+      ┌───────────────────┼───────────────────┐
+      ▼                   ▼                   ▼
 
-    Bronze Layer    Silver Layer     Gold Layer
-   (Raw Models)   (Clean Models)   (Business Models)
+ Bronze Layer      Silver Layer        Gold Layer
 
-         ▼               ▼                ▼
+ Raw Data          Cleaned Data      Analytics Data
+ Incremental       Standardized      Fact Tables
+ Processing        Enriched          OBT
+                                      Reporting
 
-   Incremental      Data Quality      Fact Tables
-   Processing       Standardization   Dimensions
-                                     Analytics OBT
+                          │
+                          ▼
 
-                         ▼
-
-                BI / Reporting Layer
+               BI / Reporting / Analytics
 ```
 
 ---
 
-## Technology Stack
+# 🛠️ Technology Stack
 
-| Component            | Technology             |
+| Category             | Technology             |
 | -------------------- | ---------------------- |
 | Cloud Data Warehouse | Snowflake              |
-| Data Transformation  | dbt                    |
+| Transformation Layer | dbt                    |
 | Cloud Storage        | AWS S3                 |
 | Programming Language | Python                 |
 | Version Control      | Git                    |
+| SQL Templating       | Jinja                  |
 | Data Modeling        | Star Schema            |
 | Historical Tracking  | SCD Type 2             |
-| Framework            | Medallion Architecture |
+| Architecture         | Medallion Architecture |
 
 ---
 
-## Data Pipeline Design
+# 📊 Data Architecture
 
-### Bronze Layer
+## 🥉 Bronze Layer
 
 Purpose:
-Store raw source data with minimal transformation.
 
-Tables:
+Store raw source data with minimal transformations.
+
+Models:
 
 * bronze_bookings
 * bronze_hosts
@@ -91,28 +100,28 @@ Tables:
 
 Responsibilities:
 
-* Preserve source records
-* Incremental ingestion
-* Schema consistency
-* Auditability
+* Preserve source data
+* Enable incremental ingestion
+* Maintain auditability
+* Serve as source of truth
 
 ---
 
-### Silver Layer
+## 🥈 Silver Layer
 
 Purpose:
-Create standardized and trusted datasets.
+
+Clean, validate, and standardize raw datasets.
 
 Transformations:
 
-* Null handling
 * Data type standardization
-* Business rule validations
-* Derived attributes
+* Null handling
+* Data quality validation
+* Attribute enrichment
 * Price categorization
-* Data enrichment
 
-Tables:
+Models:
 
 * silver_bookings
 * silver_hosts
@@ -120,162 +129,553 @@ Tables:
 
 ---
 
-### Gold Layer
+## 🥇 Gold Layer
 
 Purpose:
-Provide analytics-ready datasets for reporting and business intelligence.
 
-Artifacts:
+Provide analytics-ready datasets for business users.
 
-* Fact tables
-* Dimensional models
-* One Big Table (OBT)
-* Reporting datasets
+Models:
+
+* fact
+* obt (One Big Table)
+* ephemeral models
 
 Business Use Cases:
 
-* Revenue analysis
-* Booking trends
-* Host performance
-* Listing performance
-* Occupancy metrics
+* Revenue Analysis
+* Booking Trend Analysis
+* Host Performance Tracking
+* Listing Performance Analysis
+* Occupancy Reporting
 
 ---
 
-## Key Features
+# 📚 Slowly Changing Dimensions (SCD Type 2)
 
-### Incremental Data Processing
+The project uses dbt Snapshots to maintain historical changes.
 
-Implemented incremental dbt models to process only new or modified records, reducing execution time and warehouse consumption.
+Snapshot Models:
 
-Benefits:
-
-* Faster runs
-* Lower compute costs
-* Scalable architecture
-
----
-
-### Slowly Changing Dimensions (SCD Type 2)
-
-Implemented snapshot-based historical tracking to preserve record changes over time.
-
-Tracked Entities:
-
-* Hosts
-* Listings
-* Bookings
+* dim_bookings
+* dim_hosts
+* dim_listings
 
 Benefits:
 
 * Historical reporting
 * Point-in-time analysis
 * Change tracking
+* Auditability
 
 ---
 
-### Reusable dbt Macros
+# 📁 Project Structure
 
-Created custom Jinja macros to reduce code duplication and standardize transformation logic across models.
-
-Examples:
-
-* Price categorization
-* String standardization
-* Dynamic SQL generation
-
----
-
-### Automated Data Quality Checks
-
-Implemented testing framework to validate:
-
-* Unique keys
-* Null values
-* Source integrity
-* Business rules
-* Referential consistency
-
----
-
-## Data Modeling Approach
-
-The project follows dimensional modeling principles.
-
-### Fact Table
-
-Contains measurable business events:
-
-* Booking transactions
-* Revenue metrics
-* Stay duration
-
-### Dimension Tables
-
-Provide descriptive business context:
-
-* Host information
-* Listing information
-* Historical attributes
-
-This approach enables efficient analytical querying and dashboard development.
+```text
+AWS_DBT_Snowflake/
+│
+├── README.md
+├── pyproject.toml
+├── main.py
+│
+├── SourceData/
+│   ├── bookings.csv
+│   ├── hosts.csv
+│   └── listings.csv
+│
+├── DDL/
+│   ├── ddl.sql
+│   └── resources.sql
+│
+└── aws_dbt_snowflake_project/
+    │
+    ├── dbt_project.yml
+    ├── ExampleProfiles.yml
+    │
+    ├── models/
+    │   ├── sources/
+    │   ├── bronze/
+    │   ├── silver/
+    │   └── gold/
+    │
+    ├── macros/
+    ├── snapshots/
+    ├── analyses/
+    ├── tests/
+    └── seeds/
+```
 
 ---
 
-## dbt Capabilities Implemented
+# 🚀 Getting Started
 
-* Incremental Models
-* Snapshots
-* Custom Macros
-* Source Definitions
-* Data Tests
-* Documentation Generation
-* Jinja Templating
-* Layered Data Architecture
+## Prerequisites
+
+Before running this project, ensure the following are available:
+
+### Snowflake
+
+* Snowflake Account
+* Database Access
+* Warehouse Access
+
+### Python
+
+* Python 3.12+
+* pip
+
+### AWS
+
+* AWS Account
+* S3 Bucket (optional)
 
 ---
 
-## Sample Analytics Questions Answered
+# ⚙️ Installation
 
-* Which listings generate the highest revenue?
-* What is the booking trend over time?
-* Which hosts have the highest occupancy rates?
-* How do pricing categories impact bookings?
-* How have listing attributes changed historically?
+## Clone Repository
+
+```bash
+git clone <repository-url>
+cd AWS_DBT_Snowflake
+```
 
 ---
 
-## Skills Demonstrated
+## Create Virtual Environment
+
+### Windows
+
+```bash
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### Linux / Mac
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+---
+
+## Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+or
+
+```bash
+pip install -e .
+```
+
+---
+
+## Core Dependencies
+
+```text
+dbt-core>=1.11
+dbt-snowflake>=1.11
+sqlfmt
+```
+
+---
+
+# 🔑 Snowflake Configuration
+
+Create:
+
+```text
+~/.dbt/profiles.yml
+```
+
+```yaml
+aws_dbt_snowflake_project:
+  outputs:
+    dev:
+      account: <account_identifier>
+      database: AIRBNB
+      password: <password>
+      role: ACCOUNTADMIN
+      schema: dbt_schema
+      threads: 4
+      type: snowflake
+      user: <username>
+      warehouse: COMPUTE_WH
+  target: dev
+```
+
+---
+
+# 🏗️ Database Setup
+
+Execute DDL scripts located inside:
+
+```text
+DDL/
+```
+
+This creates:
+
+* Staging Tables
+* Required Database Objects
+
+---
+
+# 📥 Source Data Loading
+
+Load source CSV files into Snowflake staging schema.
+
+| File         | Target Table            |
+| ------------ | ----------------------- |
+| bookings.csv | AIRBNB.STAGING.BOOKINGS |
+| hosts.csv    | AIRBNB.STAGING.HOSTS    |
+| listings.csv | AIRBNB.STAGING.LISTINGS |
+
+---
+
+# ▶️ Running dbt
+
+## Verify Connection
+
+```bash
+dbt debug
+```
+
+---
+
+## Install Packages
+
+```bash
+dbt deps
+```
+
+---
+
+## Run All Models
+
+```bash
+dbt run
+```
+
+---
+
+## Run Bronze Layer
+
+```bash
+dbt run --select bronze.*
+```
+
+---
+
+## Run Silver Layer
+
+```bash
+dbt run --select silver.*
+```
+
+---
+
+## Run Gold Layer
+
+```bash
+dbt run --select gold.*
+```
+
+---
+
+## Execute Tests
+
+```bash
+dbt test
+```
+
+---
+
+## Run Snapshots
+
+```bash
+dbt snapshot
+```
+
+---
+
+## Build Entire Project
+
+```bash
+dbt build
+```
+
+---
+
+## Generate Documentation
+
+```bash
+dbt docs generate
+dbt docs serve
+```
+
+---
+
+# ⚡ Key Features
+
+## Incremental Processing
+
+The Bronze and Silver layers use incremental materialization to process only newly arrived records.
+
+Example:
+
+```sql
+{{ config(materialized='incremental') }}
+
+{% if is_incremental() %}
+
+WHERE CREATED_AT >
+(
+    SELECT COALESCE(MAX(CREATED_AT),'1900-01-01')
+    FROM {{ this }}
+)
+
+{% endif %}
+```
+
+Benefits:
+
+* Reduced warehouse costs
+* Faster execution
+* Scalable architecture
+
+---
+
+## Custom Macros
+
+Reusable business logic is implemented using dbt macros.
+
+Example:
+
+```sql
+{{ tag('CAST(PRICE_PER_NIGHT AS INT)') }}
+```
+
+Output:
+
+```text
+LOW
+MEDIUM
+HIGH
+```
+
+---
+
+## Dynamic SQL using Jinja
+
+The OBT model leverages Jinja loops to dynamically generate SQL.
+
+Example:
+
+```sql
+{% set configs = [...] %}
+
+SELECT
+
+{% for config in configs %}
+
+...
+
+{% endfor %}
+```
+
+Benefits:
+
+* Less repetitive code
+* Improved maintainability
+* Easier model expansion
+
+---
+
+## SCD Type 2 Snapshots
+
+Historical records are tracked using dbt snapshots.
+
+Features:
+
+* Valid From Date
+* Valid To Date
+* Current Record Indicator
+* Historical State Tracking
+
+---
+
+## Schema Management
+
+Custom schema generation automatically routes models into dedicated schemas.
+
+Example:
+
+```text
+AIRBNB.BRONZE
+AIRBNB.SILVER
+AIRBNB.GOLD
+```
+
+---
+
+# ✅ Data Quality Framework
+
+Implemented Data Quality Checks:
+
+* Unique Key Validation
+* Not Null Validation
+* Source Integrity Checks
+* Business Rule Validation
+* Referential Integrity Testing
+
+Example:
+
+```bash
+dbt test
+```
+
+---
+
+# 🔍 Data Lineage
+
+dbt automatically generates lineage graphs showing:
+
+* Source Dependencies
+* Upstream Relationships
+* Downstream Impacts
+* Model Dependencies
+
+Generate lineage using:
+
+```bash
+dbt docs generate
+dbt docs serve
+```
+
+---
+
+# 📈 Analytics Use Cases
+
+The Gold Layer supports the following analytical use cases:
+
+### Revenue Analysis
+
+Identify top-performing properties and revenue trends.
+
+### Host Performance
+
+Evaluate host effectiveness and booking performance.
+
+### Booking Trends
+
+Analyze booking behavior over time.
+
+### Property Analysis
+
+Compare listing performance across categories.
+
+### Historical Reporting
+
+Leverage SCD Type 2 snapshots for point-in-time analysis.
+
+---
+
+# 💡 Skills Demonstrated
+
+This project demonstrates hands-on experience in:
 
 * Snowflake Data Warehousing
 * Analytics Engineering
 * dbt Development
-* Data Modeling
-* SQL Optimization
-* Incremental Loading
-* SCD Type 2
 * ELT Pipeline Design
+* Medallion Architecture
+* Incremental Loading
+* SCD Type 2 Snapshots
+* Data Modeling
+* Fact & Dimension Design
 * Data Quality Engineering
-* Cloud Data Platforms
+* SQL Development
+* Jinja Templating
+* Git Version Control
+* AWS S3 Integration
 
 ---
 
-## Future Enhancements
+# 🔒 Security Best Practices
 
-* CI/CD Integration using GitHub Actions
-* Automated Orchestration using Apache Airflow
-* Real-time Data Ingestion
-* Data Observability Layer
-* BI Dashboard Integration
-* Cost Monitoring and Optimization
+* Credentials excluded from version control
 * Role-Based Access Control (RBAC)
+* Environment-specific configurations
+* Schema-level separation
+* Principle of least privilege
 
 ---
 
-## Project Outcome
+# 🐛 Troubleshooting
 
-Successfully designed and implemented a scalable cloud-native analytics platform that transforms raw Airbnb operational data into trusted business datasets using Snowflake and dbt. The solution demonstrates modern data engineering and analytics engineering best practices including Medallion Architecture, Incremental Processing, SCD Type 2 implementation, Data Quality Testing, and Dimensional Modeling.
+## Snowflake Connection Errors
 
+```bash
+dbt debug
+```
+
+Verify:
+
+* Username
+* Password
+* Account Identifier
+* Warehouse Name
+
+---
+
+## Compilation Errors
+
+Verify:
+
+* dbt_project.yml
+* Jinja Syntax
+* Source Definitions
+* Model Dependencies
+
+---
+
+## Incremental Model Issues
+
+Run full refresh:
+
+```bash
+dbt run --full-refresh
+```
+
+---
+
+# 📊 Future Enhancements
+
+* Apache Airflow Orchestration
+* CI/CD using GitHub Actions
+* Data Observability
+* Automated Monitoring
+* Power BI Integration
+* Tableau Integration
+* Data Masking for PII
+* Real-Time Data Ingestion
+* Cost Optimization Dashboards
+
+---
+
+# 👨‍💻 Author
+
+**Project:** Airbnb Analytics Engineering Platform
+
+**Tech Stack:** Snowflake | dbt | AWS | SQL | Python | Git
+
+This project was developed as a hands-on implementation of modern Data Engineering and Analytics Engineering practices using the Modern Data Stack.
 
 
 ### Resources:
